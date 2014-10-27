@@ -1,0 +1,141 @@
+{% extends "PritzwalksAppBundle::base.html.twig"%}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script type="text/javascript">
+        var validateText = function(form) {
+            text = $('#pritzwalks_appbundle_post_title').val() + ' ' + $('#pritzwalks_appbundle_post_content').val();
+
+            if (text.length > 0) {
+                $.ajax({
+                    url: '{{ path('ajax_validate_text')}}',
+                    type: 'POST',
+                    data: {'text': text},
+                    success: function(resp) {
+                        if (resp.result == false) {
+                            alert("{{ constant('Pritzwalks\\AppBundle\\Entity\\BadWord::SPAM_MESSAGE')|raw }}");
+                        } else {
+                            form.submit();
+                        };
+                    }
+                });
+            }
+
+            return false;
+        };
+    </script>
+{% endblock %}
+
+{% block bwc_main_breadcrumb %}
+    <ol class="breadcrumb wizard row">
+        <li><a href="{{ path('homepage') }}">Home</a></li>
+        <li><a href="{{ path('discussion_list') }}">MBA Discussions</a></li>
+        <li class="active"><a href="{{ path('discussion_list', {'subListSlug': current_sublist_slug }) }}">{{ current_sublist_slug|title|replace('-', ' ') }}</a></li>
+        <li class="active"><a href="{{ path('discussion_thread_new', {'subListSlug': current_sublist_slug }) }}">New Post</a></li>
+    </ol>
+{% endblock %}
+
+{% block bwc_main_content %}
+    <div class="row">
+        <div class="col-md-7">
+            <h1>MBA Discussions</h1>
+            <p>Welcome to the FIND MBA discussion board – a place to discuss MBA programs and admissions, ask questions, and share experiences. Browse discussion threads by topic below, or do a keyword search for a specific topic.</p>
+        </div>
+    </div>
+    <div class="clearfix"></div>
+
+    <div class="row">
+        <div>
+            <ul class="nav nav-tabs">
+                {% if current_sublist_slug is not defined or current_sublist_slug is empty or current_sublist_slug == 'all' %}
+                    <li class="active"><a href="{{ url('discussion_list') }}">All</a></li>
+                {% else %}
+                    <li><a href="{{ url('discussion_list') }}">All</a></li>
+                {% endif %}
+
+                {% if current_sublist_slug is defined and current_sublist_slug == constant('Pritzwalks\\AppBundle\\Entity\\Post::TOPIC_GENERAL_FORUM') %}
+                    <li class="active"><a href="{{ url('discussion_list', {'subListSlug': constant('Pritzwalks\\AppBundle\\Entity\\Post::TOPIC_GENERAL_FORUM') }) }}">General Forum</a></li>
+                {% else %}
+                    <li><a href="{{ url('discussion_list', {'subListSlug': constant('Pritzwalks\\AppBundle\\Entity\\Post::TOPIC_GENERAL_FORUM') }) }}">General Forum</a></li>
+                {% endif %}
+
+                {% if current_sublist_slug is defined and current_sublist_slug == constant('Pritzwalks\\AppBundle\\Entity\\Post::TOPIC_GMAT') %}
+                    <li class="active"><a href="{{ url('discussion_list', {'subListSlug': constant('Pritzwalks\\AppBundle\\Entity\\Post::TOPIC_GMAT') }) }}">GMAT</a></li>
+                {% else %}
+                    <li><a href="{{ url('discussion_list', {'subListSlug': constant('Pritzwalks\\AppBundle\\Entity\\Post::TOPIC_GMAT') }) }}">GMAT</a></li>
+                {% endif %}
+
+                {% for continent in list_continent%}
+                    {% if current_sublist_slug is defined and current_sublist_slug == continent.slug %}
+                        <li class="active"><a href="{{ url('discussion_list', {'subListSlug': continent.slug }) }}">{{ continent.shortTitle|raw }}</a></li>
+                    {% else %}
+                        <li><a href="{{ url('discussion_list', {'subListSlug': continent.slug }) }}">{{ continent.shortTitle|raw }}</a></li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if current_sublist_slug is defined and current_sublist_slug == constant('Pritzwalks\\AppBundle\\Entity\\Post::TOPIC_DISTANCE_LEARNING') %}
+                    <li class="active"><a href="{{ url('discussion_list', {'subListSlug': constant('Pritzwalks\\AppBundle\\Entity\\Post::TOPIC_DISTANCE_LEARNING') }) }}">Distance Learning</a></li>
+                {% else %}
+                    <li><a href="{{ url('discussion_list', {'subListSlug': constant('Pritzwalks\\AppBundle\\Entity\\Post::TOPIC_DISTANCE_LEARNING') }) }}">Distance Learning</a></li>
+                {% endif %}
+            </ul>
+        </div>
+        <div class="clearfix"></div><br>
+
+        <div>
+            <form class="form-horizontal" onsubmit="return validateText(this);" role="form" action="{{ path('discussion_thread_new', {'subListSlug': current_sublist_slug })}}" method="POST">
+                {% if new_post_form.topic is defined %}
+                    <div class="form-group">
+                        <label for="pritzwalks_appbundle_post_topic" class="col-sm-2 control-label">Topic</label>
+
+                        <div class="col-sm-6">
+                            {{ form_widget(new_post_form.topic, {'attr':{'class':'form-control'}}) }}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label for="pritzwalks_appbundle_post_title" class="col-sm-2 control-label">Subject *</label>
+
+                    <div class="col-sm-6">
+                        {{ form_widget(new_post_form.title, {'attr':{'class':'form-control'}}) }}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="pritzwalks_appbundle_post_content" class="col-sm-2 control-label">Post *</label>
+
+                    <div class="col-sm-8">
+                        {{ form_widget(new_post_form.content, {'attr':{'class':'form-control', 'rows': 10}}) }}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-sm-offset-2 col-sm-6">
+                        <div class="checkbox">
+                            <label>
+                                {{ form_widget(new_post_form.notification) }} {{ form_label(new_post_form.notification) }}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-sm-offset-2 col-sm-6">
+                        <button type="submit" class="btn btn-default">Submit Post</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-sm-offset-2 col-sm-10">
+                        <p>Please avoid excessive use of CAPS or chat/SMS language (eg u r gr8, plz, coz).</p>
+                        <p>By using the FIND MBA Message Board or any other section of FIND MBA you agree to the <a href="#">Terms of Use</a>.</p>
+                    </div>
+                </div>
+
+                {{ form_rest(new_post_form) }}
+            </form>
+        </div>
+    </div>
+{% endblock %}
